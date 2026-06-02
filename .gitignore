@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.chainlit/
+chainlit.md
+.env
+.files/

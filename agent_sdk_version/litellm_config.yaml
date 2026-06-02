@@ -1,0 +1,18 @@
+# LiteLLM proxy: traduce el formato Anthropic (/v1/messages, que habla el Claude
+# Agent SDK) al formato OpenAI-compatible que expone llama.cpp en :8081.
+#
+# Este proxy ES el "seam" del que hablamos: el Agent SDK no puede hablar
+# directamente con llama.cpp (formatos distintos); LiteLLM hace de traductor.
+#
+# El modelo "*" (wildcard) enruta CUALQUIER nombre de modelo que pida el CLI
+# (claude-local, y tambien el modelo "small/fast" que Claude usa de fondo) al
+# mismo llama.cpp local.
+model_list:
+  - model_name: "*"
+    litellm_params:
+      model: openai/qwen2.5-7b-instruct
+      api_base: http://localhost:8081/v1
+      api_key: sk-no-key-required
+
+litellm_settings:
+  drop_params: true   # descarta params Anthropic que el backend OpenAI no entienda

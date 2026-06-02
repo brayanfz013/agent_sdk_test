@@ -1,0 +1,32 @@
+[project]
+name = "demo-agent-automation"
+version = "0.1.0"
+description = "Agente local de administracion de carpeta (LangGraph + llama.cpp en Docker) con UI Chainlit y API FastAPI. Modelo conmutable: local / ollama / vertex."
+requires-python = ">=3.11"
+dependencies = [
+    "langchain>=1.3",
+    "langchain-openai>=1.2",
+    "langgraph>=1.2",
+    "chainlit>=2.11",
+    "fastapi>=0.136",
+    "uvicorn>=0.48",
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+]
+
+# Backends de modelo opcionales (el backend 'local' no los necesita):
+#   uv sync --extra ollama    /    uv sync --extra vertex
+[project.optional-dependencies]
+ollama = ["langchain-ollama>=0.2"]
+vertex = ["langchain-google-vertexai>=2"]
+# Variante con Claude Agent SDK (agent_sdk_version/): SDK + proxy de traduccion
+agent-sdk = ["claude-agent-sdk>=0.2.87", "litellm[proxy]>=1.50"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
