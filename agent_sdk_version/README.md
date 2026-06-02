@@ -36,7 +36,7 @@ OpenAI nativo); con el Agent SDK + modelo local, sí.
 | Archivo | Qué hace |
 |---|---|
 | `litellm_config.yaml` | Proxy: enruta cualquier modelo al llama.cpp local (`openai/...`) |
-| `run_proxy.sh` | Arranca el proxy LiteLLM en `:4000` |
+| `run_proxy.sh` | Arranca el proxy LiteLLM en `:4000`, **aislado con `uvx`** (versión parcheada, su propio entorno) |
 | `tools_sdk.py` | Tools MCP in-process. **Reusan la misma lógica de sandbox de `app/tools.py`** (una sola fuente de verdad). Solo lectura (sin `move_file`) |
 | `sdk_agent.py` | `ClaudeAgentOptions`: modelo `claude-local`, system prompt, tools permitidas, `setting_sources=[]` (no carga CLAUDE.md), `env` apuntando al proxy |
 | `cli_sdk.py` | CLI one-shot e interactiva (memoria nativa del SDK) |
@@ -61,7 +61,10 @@ uv run python -m agent_sdk_version.cli_sdk                            # interact
 ```
 
 Requisitos extra vs LangGraph: el binario `claude` (Claude Code CLI) y `node`,
-porque el SDK spawnea el CLI por debajo.
+porque el SDK spawnea el CLI por debajo. El proxy LiteLLM se ejecuta con `uvx`
+(la primera vez descarga su entorno aislado y luego lo cachea), así que **no es
+una dependencia del proyecto** — esto evita el conflicto de versión de uvicorn
+entre chainlit y litellm y mantiene a litellm en una versión parcheada.
 
 ## Resultado real (probado en este hardware)
 

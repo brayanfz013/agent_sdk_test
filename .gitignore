@@ -8,7 +8,7 @@ __pycache__/
 
 # --- Entorno / uv ---
 .venv/
-# NOTA: uv.lock SI se versiona (reproducibilidad del entorno). No lo ignores.
+uv.lock
 
 # --- Secretos / config local ---
 .env
