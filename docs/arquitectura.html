@@ -270,7 +270,7 @@
 docker run -d --rm --name demo-llm \
   <span class="flag">--gpus</span> '"device=0"' <span class="cmt"># pin a la RTX 5070 (12GB)</span>
   -p <span class="val">8081</span>:8081 \
-  -v /home/bubuntu/models/qwen2.5-7b-instruct:/models \
+  -v $HOME/models/qwen2.5-7b-instruct:/models \
   ghcr.io/ggml-org/llama.cpp:server-cuda13 \
   -m /models/Qwen2.5-7B-Instruct-Q4_K_M.gguf \
   <span class="flag">--jinja</span> <span class="cmt"># ← imprescindible: habilita tool-calling</span>

@@ -44,7 +44,7 @@ OpenAI nativo); con el Agent SDK + modelo local, sí.
 ## Puesta en marcha
 
 ```bash
-cd /home/bubuntu/demo_agent_automation
+cd $HOME/demo_agent_automation
 
 # 0) deps de esta variante
 uv sync --extra agent-sdk

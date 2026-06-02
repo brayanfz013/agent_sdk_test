@@ -41,7 +41,7 @@ OpenAI-compatible servido por llama.cpp en Docker sobre GPU.
 # scripts/download_model.sh
 hf download bartowski/Qwen2.5-7B-Instruct-GGUF \
   Qwen2.5-7B-Instruct-Q4_K_M.gguf \
-  --local-dir /home/bubuntu/models/qwen2.5-7b-instruct
+  --local-dir $HOME/models/qwen2.5-7b-instruct
 ```
 
 ### 3. Despliegue del endpoint con Docker (GPU)
@@ -56,7 +56,7 @@ docker run -d --rm \
   --name demo-llm \
   --gpus '"device=0"' \                 # pin a la RTX 5070 (12GB); un 7B cabe entero
   -p 8081:8081 \
-  -v /home/bubuntu/models/qwen2.5-7b-instruct:/models \
+  -v $HOME/models/qwen2.5-7b-instruct:/models \
   ghcr.io/ggml-org/llama.cpp:server-cuda13 \
   -m /models/Qwen2.5-7B-Instruct-Q4_K_M.gguf \
   --alias qwen2.5-7b-instruct \
@@ -131,7 +131,7 @@ FASE 3  Caras de consumo      Chainlit (chatbot)   ·   FastAPI (API :8080)
 ## Puesta en marcha
 
 ```bash
-cd /home/bubuntu/demo_agent_automation
+cd $HOME/demo_agent_automation
 cp .env.example .env            # ajusta MANAGED_DIR si tu usuario Windows difiere
 
 uv sync                         # entorno + dependencias (gestor: uv)

@@ -1,8 +1,31 @@
-.venv/
+# --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Entorno / uv ---
+.venv/
+# NOTA: uv.lock SI se versiona (reproducibilidad del entorno). No lo ignores.
+
+# --- Secretos / config local ---
+.env
+.env.*
+!.env.example
+
+# --- Chainlit ---
 .chainlit/
 chainlit.md
-.env
 .files/
+
+# --- Logs / temporales ---
+*.log
+litellm*.log
+
+# --- SO / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

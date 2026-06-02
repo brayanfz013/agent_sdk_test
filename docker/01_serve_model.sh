@@ -4,7 +4,7 @@
 # GPU 0 (RTX 5070, 12GB), que sobra para un 7B Q4. --jinja habilita tool calling.
 set -euo pipefail
 
-MODEL_DIR="/home/bubuntu/models/qwen2.5-7b-instruct"
+MODEL_DIR="$HOME/models/qwen2.5-7b-instruct"
 MODEL_FILE="Qwen2.5-7B-Instruct-Q4_K_M.gguf"
 PORT="${PORT:-8081}"
 
