@@ -15,8 +15,8 @@ LOCAL_MODEL = os.getenv("LOCAL_MODEL", "qwen2.5-7b-instruct")
 LOCAL_API_KEY = os.getenv("LOCAL_API_KEY", "sk-no-key-required")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
 
-# Carpeta que administra el agente (Windows Downloads vista desde WSL)
-MANAGED_DIR = Path(os.getenv("MANAGED_DIR", "/mnt/c/Users/bwindows/Downloads")).resolve()
+# Carpeta que administra el agente (configurable via .env; ej. ./sandbox o un Downloads)
+MANAGED_DIR = Path(os.getenv("MANAGED_DIR", "./sandbox")).resolve()
 
 # Seguridad: escrituras deshabilitadas por defecto (solo lectura)
 ALLOW_WRITES = os.getenv("ALLOW_WRITES", "false").lower() in ("1", "true", "yes")

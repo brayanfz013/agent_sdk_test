@@ -23,6 +23,77 @@ La misma tarea está implementada con **dos stacks** para compararlos:
 pineado a la GPU 0, con `--jinja` para tool-calling. Conmutable sin tocar código
 vía `LLM_BACKEND`: `local` (llama.cpp) · `ollama` · `vertex_gemini`.
 
+## Cómo se generó el modelo y el endpoint (Docker)
+
+Esta es la pieza que alimenta a **las dos versiones**: un endpoint local
+OpenAI-compatible servido por llama.cpp en Docker sobre GPU.
+
+### 1. Qué modelo y por qué
+
+- **`Qwen2.5-7B-Instruct`**, formato **GGUF**, cuantización **Q4_K_M** (~4.7 GB).
+- Elegido por **tool-calling fiable** (lo que decide que un agente funcione) y
+  porque a Q4 entra de sobra en una sola GPU de 12 GB dejando espacio para 32K
+  de contexto. Repo HF: `bartowski/Qwen2.5-7B-Instruct-GGUF`.
+
+### 2. Descarga del modelo
+
+```bash
+# scripts/download_model.sh
+hf download bartowski/Qwen2.5-7B-Instruct-GGUF \
+  Qwen2.5-7B-Instruct-Q4_K_M.gguf \
+  --local-dir /home/bubuntu/models/qwen2.5-7b-instruct
+```
+
+### 3. Despliegue del endpoint con Docker (GPU)
+
+Se reutiliza la imagen oficial de llama.cpp con CUDA (ya probada en este
+hardware: RTX 5070 + RTX 3070). El contenedor expone un endpoint
+**OpenAI-compatible** en `:8081/v1`.
+
+```bash
+# docker/01_serve_model.sh
+docker run -d --rm \
+  --name demo-llm \
+  --gpus '"device=0"' \                 # pin a la RTX 5070 (12GB); un 7B cabe entero
+  -p 8081:8081 \
+  -v /home/bubuntu/models/qwen2.5-7b-instruct:/models \
+  ghcr.io/ggml-org/llama.cpp:server-cuda13 \
+  -m /models/Qwen2.5-7B-Instruct-Q4_K_M.gguf \
+  --alias qwen2.5-7b-instruct \
+  --jinja \                             # ← IMPRESCINDIBLE: habilita tool-calling
+  --host 0.0.0.0 --port 8081 \
+  -c 32768 \                            # contexto 32K
+  -ngl 99 \                             # todas las capas a GPU
+  --flash-attn on \
+  -np 1
+```
+
+Qué hace cada flag clave:
+
+| Flag | Para qué |
+|---|---|
+| `--gpus '"device=0"'` | Fija el modelo a la GPU 0 (RTX 5070). Un 7B Q4 cabe completo |
+| `--jinja` | Activa el chat template con soporte de **tools**. Sin esto, el function-calling NO funciona |
+| `-c 32768` | Ventana de contexto (suficiente para leer archivos + historial) |
+| `-ngl 99` | Offload de todas las capas a GPU |
+
+Verificar:
+
+```bash
+curl -s http://localhost:8081/health          # {"status":"ok"}
+uv run python scripts/raw_toolcall_test.py     # confirma tool-calling formato OpenAI
+```
+
+### 4. Cómo lo consume la app
+
+- **Versión LangGraph**: `app/llm.py` crea `ChatOpenAI(base_url="http://localhost:8081/v1", ...)`.
+  Habla OpenAI **directo** con llama.cpp. Sin traducción.
+- **Versión Agent SDK**: el SDK habla Anthropic, así que `agent_sdk_version/`
+  levanta un **proxy LiteLLM** (`:4000`) que traduce Anthropic↔OpenAI hacia el
+  mismo `:8081`. Ver [`agent_sdk_version/README.md`](agent_sdk_version/README.md).
+
+> 📐 Diagrama visual de toda la arquitectura: [`docs/arquitectura.html`](docs/arquitectura.html) (ábrelo en el navegador).
+
 ## Arquitectura — versión LangGraph (3 fases)
 
 ```

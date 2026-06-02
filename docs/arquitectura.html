@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente Admin · Arquitectura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c10; --bg2:#0e1218; --panel:#12171f; --panel2:#161d28;
+    --line:#212b38; --ink:#eaf0f6; --muted:#8593a4; --dim:#5b6675;
+    --amber:#ff7d3b; --teal:#3fe0c9; --amber-d:#3a2418; --teal-d:#10302c;
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Sora',sans-serif; color:var(--ink); background:var(--bg);
+    line-height:1.6; overflow-x:hidden; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(1100px 560px at 84% -12%, rgba(255,125,59,.12), transparent 60%),
+      radial-gradient(820px 520px at -8% 14%, rgba(63,224,201,.10), transparent 56%);
+    background-attachment:fixed;
+  }
+  /* blueprint grid overlay */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(120,140,160,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,140,160,.045) 1px, transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 30%, transparent 90%);
+  }
+  .wrap{position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 26px}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .grad{background:linear-gradient(100deg,var(--amber),var(--teal)); -webkit-background-clip:text; background-clip:text; color:transparent}
+
+  /* ---- top bar ---- */
+  header{position:sticky; top:0; z-index:50; backdrop-filter:blur(12px);
+    background:rgba(10,12,16,.66); border-bottom:1px solid var(--line)}
+  .bar{max-width:1080px; margin:0 auto; padding:14px 26px; display:flex; align-items:center; justify-content:space-between}
+  .brand{font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.08em; color:var(--muted)}
+  .brand b{color:var(--ink)}
+  .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--teal); box-shadow:0 0 12px var(--teal); margin-right:8px; animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .bar a{color:var(--amber); text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:12.5px; border:1px solid var(--line); padding:7px 12px; border-radius:9px; transition:.2s}
+  .bar a:hover{border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-d)}
+
+  /* ---- hero ---- */
+  .hero{padding:92px 0 40px; text-align:left}
+  .kick{font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--teal); margin-bottom:22px}
+  h1{font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(2.6rem,7vw,5rem); line-height:.98; letter-spacing:-.02em}
+  .hero p{max-width:620px; margin-top:22px; color:var(--muted); font-size:1.08rem; font-weight:300}
+  .hero p b{color:var(--ink); font-weight:600}
+
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:46px}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:18px}
+  .stat .l{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim)}
+  .stat .v{font-family:'Syne',sans-serif; font-weight:700; font-size:1.35rem; margin-top:8px}
+  .stat .s{font-size:12.5px; color:var(--muted); margin-top:2px}
+
+  /* ---- sections ---- */
+  section{padding:54px 0; border-top:1px solid var(--line); margin-top:38px}
+  .eyebrow{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--amber); margin-bottom:14px}
+  h2{font-family:'Syne',sans-serif; font-weight:700; font-size:clamp(1.7rem,3.6vw,2.5rem); letter-spacing:-.01em}
+  .lead{color:var(--muted); max-width:640px; margin-top:12px; font-weight:300}
+
+  /* ---- flow nodes ---- */
+  .flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap; margin-top:34px}
+  .node{flex:1 1 200px; background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:20px; position:relative; transition:.25s}
+  .node:hover{transform:translateY(-4px); border-color:var(--teal); box-shadow:0 14px 40px -18px var(--teal)}
+  .node .ph{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim); letter-spacing:.1em}
+  .node h3{font-family:'Syne',sans-serif; font-weight:700; font-size:1.15rem; margin:8px 0 6px}
+  .node p{font-size:13.5px; color:var(--muted); font-weight:300}
+  .node .tag{display:inline-block; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--teal); background:var(--teal-d); border:1px solid #1b4a44; padding:4px 9px; border-radius:7px}
+  .conn{display:flex; align-items:center; justify-content:center; flex:0 0 56px; color:var(--amber); font-size:1.5rem}
+  @media(max-width:760px){ .conn{flex-basis:100%; transform:rotate(90deg); padding:6px 0} .flow{flex-direction:column} }
+
+  /* ---- two architectures ---- */
+  .lanes{display:grid; grid-template-columns:1fr; gap:18px; margin-top:34px}
+  .lane{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:24px}
+  .lane.lg{border-color:#2a3a30}
+  .lane.sdk{border-color:#3a2e22}
+  .lane .lh{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+  .lane .lh .pill{font-family:'JetBrains Mono',monospace; font-size:11px; padding:5px 10px; border-radius:20px; letter-spacing:.05em}
+  .lane.lg .pill{background:var(--teal-d); color:var(--teal); border:1px solid #1b4a44}
+  .lane.sdk .pill{background:var(--amber-d); color:var(--amber); border:1px solid #4a3320}
+  .lane h3{font-family:'Syne',sans-serif; font-weight:700; font-size:1.2rem}
+  .lane .note{color:var(--muted); font-size:13.5px; font-weight:300; margin-bottom:18px}
+  .chain{display:flex; align-items:center; flex-wrap:wrap; gap:10px}
+  .box{font-family:'JetBrains Mono',monospace; font-size:12.5px; background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; line-height:1.35}
+  .box .bt{display:block; color:var(--ink); font-weight:700}
+  .box .bs{display:block; color:var(--dim); font-size:11px; margin-top:3px}
+  .box.gpu{border-color:#4a3320; box-shadow:inset 0 0 26px -16px var(--amber)}
+  .box.seam{border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-d)}
+  .lk{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); white-space:nowrap; display:flex; flex-direction:column; align-items:center; gap:2px}
+  .lk .ar{color:var(--amber); font-size:1.2rem; line-height:1}
+  .lk.ok .ar{color:var(--teal)}
+  .seam-tag{display:inline-block; margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--amber)}
+
+  /* ---- request flow stepper ---- */
+  .steps{margin-top:30px; display:grid; gap:0}
+  .step{display:grid; grid-template-columns:46px 1fr; gap:18px; padding:16px 0; border-bottom:1px dashed var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .n{font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--bg); background:linear-gradient(135deg,var(--amber),var(--teal)); width:38px; height:38px; border-radius:10px; display:grid; place-items:center}
+  .step .c b{font-family:'Syne',sans-serif}
+  .step .c{font-weight:300; color:var(--muted)}
+  .step .c b{color:var(--ink); font-weight:600}
+  .step code{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--teal); background:var(--teal-d); padding:2px 6px; border-radius:5px}
+
+  /* ---- terminal card ---- */
+  .term{background:#070a0e; border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:28px}
+  .term .top{display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--panel)}
+  .term .top i{width:11px; height:11px; border-radius:50%; display:inline-block}
+  .term .top .t1{background:#ff5f56}.term .top .t2{background:#ffbd2e}.term .top .t3{background:#27c93f}
+  .term .top span{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--dim); margin-left:8px}
+  .term pre{padding:18px 20px; overflow-x:auto; font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.75; color:#c9d4e0}
+  .term .cmt{color:#5b6675}
+  .term .flag{color:var(--amber)}
+  .term .val{color:var(--teal)}
+
+  /* ---- cards grid ---- */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:30px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:24px}
+  .card h3{font-family:'Syne',sans-serif; font-weight:700; font-size:1.2rem; display:flex; align-items:center; gap:10px}
+  .card h3 .ic{font-size:1.3rem}
+  .card ul{list-style:none; margin-top:14px; display:grid; gap:11px}
+  .card li{font-size:13.8px; color:var(--muted); font-weight:300; padding-left:20px; position:relative}
+  .card li::before{content:"▸"; position:absolute; left:0; color:var(--teal)}
+  .card li b{color:var(--ink); font-weight:600}
+
+  /* ---- table ---- */
+  table{width:100%; border-collapse:collapse; margin-top:28px; font-size:13.8px}
+  th,td{text-align:left; padding:14px 16px; border-bottom:1px solid var(--line)}
+  th{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim)}
+  td b{color:var(--ink)} td{color:var(--muted); font-weight:300}
+  .yes{color:var(--teal)} .warn{color:var(--amber)}
+  tr:hover td{background:var(--panel)}
+
+  footer{border-top:1px solid var(--line); margin-top:40px; padding:40px 0 80px; color:var(--dim); font-family:'JetBrains Mono',monospace; font-size:12.5px}
+  footer a{color:var(--teal); text-decoration:none}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+  .chip{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:20px; padding:6px 12px}
+
+  /* reveal */
+  .rv{opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)}
+  .rv.in{opacity:1; transform:none}
+  .hero h1,.hero .kick,.hero p,.hero .stats{opacity:0; animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards}
+  .hero .kick{animation-delay:.05s}.hero h1{animation-delay:.16s}.hero p{animation-delay:.34s}.hero .stats{animation-delay:.5s}
+  @keyframes rise{to{opacity:1; transform:none}}
+  .hero h1,.hero p,.hero .stats{transform:translateY(24px)}
+  @media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand"><span class="dot"></span><b>agente_admin</b> · local file agent</div>
+    <a href="https://github.com/brayanfz013/agent_sdk_test" target="_blank">repo ↗</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="kick">Arquitectura · LLM local · GPU · agente de archivos</div>
+    <h1>Un modelo<br><span class="grad">open-source</span><br>en tu GPU.</h1>
+    <p>Un modelo pequeño con <b>tool-calling</b>, servido en <b>Docker sobre GPU</b> con
+      llama.cpp, que <b>administra una carpeta</b> a demanda. La misma tarea, resuelta con
+      <b>dos stacks</b> — LangGraph y Claude Agent SDK — para comparar el trade-off real.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="l">GPU</div><div class="v">RTX 5070</div><div class="s">12 GB · pin device 0</div></div>
+      <div class="stat"><div class="l">Modelo</div><div class="v">Qwen2.5-7B</div><div class="s">GGUF Q4_K_M · ~4.7 GB</div></div>
+      <div class="stat"><div class="l">Endpoint</div><div class="v mono">:8081/v1</div><div class="s">OpenAI-compatible</div></div>
+      <div class="stat"><div class="l">Stacks</div><div class="v">2</div><div class="s">LangGraph · Agent SDK</div></div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <section>
+    <div class="eyebrow">El pipeline</div>
+    <h2>Tres fases, de la GPU a la pantalla</h2>
+    <p class="lead">El endpoint del modelo alimenta al agente; el agente expone tres caras de consumo.</p>
+
+    <div class="flow rv">
+      <div class="node">
+        <div class="ph">FASE 01</div>
+        <h3>Modelo en Docker</h3>
+        <p>llama.cpp + Qwen2.5-7B sobre GPU. <code>--jinja</code> habilita tool-calling.</p>
+        <span class="tag">:8081 · OpenAI</span>
+      </div>
+      <div class="conn">→</div>
+      <div class="node">
+        <div class="ph">FASE 02</div>
+        <h3>Agente</h3>
+        <p>ReAct + tools de archivo con <b>sandbox</b> sobre la carpeta. Solo lectura.</p>
+        <span class="tag">memoria + compactador</span>
+      </div>
+      <div class="conn">→</div>
+      <div class="node">
+        <div class="ph">FASE 03</div>
+        <h3>Consumo</h3>
+        <p>CLI, chatbot (Chainlit) y API (FastAPI) — todos sobre el mismo agente.</p>
+        <span class="tag">CLI · Web · API</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TWO ARCHITECTURES -->
+  <section>
+    <div class="eyebrow">La decisión clave</div>
+    <h2>Dos caminos al mismo modelo</h2>
+    <p class="lead">El formato de tool-calling es lo que define el diseño. LangGraph habla OpenAI
+      nativo; el Agent SDK habla Anthropic y necesita un traductor.</p>
+
+    <div class="lanes">
+      <div class="lane lg rv">
+        <div class="lh"><span class="pill">LangGraph</span><h3>Directo · un seam menos</h3></div>
+        <p class="note">El agente habla OpenAI nativo con llama.cpp. Sin traducción intermedia.</p>
+        <div class="chain">
+          <div class="box"><span class="bt">App · LangGraph</span><span class="bs">create_react_agent</span></div>
+          <div class="lk ok"><span>OpenAI</span><span class="ar">──▶</span></div>
+          <div class="box gpu"><span class="bt">llama.cpp · GPU</span><span class="bs">:8081 /v1</span></div>
+        </div>
+        <span class="seam-tag" style="color:var(--teal)">✓ 0 proxies · control total del loop</span>
+      </div>
+
+      <div class="lane sdk rv">
+        <div class="lh"><span class="pill">Claude Agent SDK</span><h3>Vía proxy de traducción</h3></div>
+        <p class="note">El SDK habla Anthropic. LiteLLM traduce Anthropic↔OpenAI hacia el mismo modelo.</p>
+        <div class="chain">
+          <div class="box"><span class="bt">App · claude CLI</span><span class="bs">+ tools MCP</span></div>
+          <div class="lk"><span>Anthropic</span><span class="ar">──▶</span></div>
+          <div class="box seam"><span class="bt">LiteLLM · proxy</span><span class="bs">:4000 · traductor</span></div>
+          <div class="lk ok"><span>OpenAI</span><span class="ar">──▶</span></div>
+          <div class="box gpu"><span class="bt">llama.cpp · GPU</span><span class="bs">:8081 /v1</span></div>
+        </div>
+        <span class="seam-tag">▲ el proxy ES el "seam" · a cambio: memoria/sesiones de fábrica</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- REQUEST FLOW -->
+  <section>
+    <div class="eyebrow">El recorrido</div>
+    <h2>Qué pasa en una pregunta</h2>
+    <div class="steps">
+      <div class="step rv"><div class="n">1</div><div class="c"><b>Usuario</b> pregunta: <i>"¿cuántos PDFs hay y cuál es el más grande?"</i></div></div>
+      <div class="step rv"><div class="n">2</div><div class="c">El <b>modelo local</b> decide llamar una herramienta y emite un <code>tool_call</code>.</div></div>
+      <div class="step rv"><div class="n">3</div><div class="c">Se ejecuta <code>folder_stats()</code> — recorre la carpeta dentro del <b>sandbox</b> y devuelve conteos exactos.</div></div>
+      <div class="step rv"><div class="n">4</div><div class="c">El resultado vuelve al modelo, que <b>redacta la respuesta</b> en lenguaje natural.</div></div>
+      <div class="step rv"><div class="n">5</div><div class="c">El <b>checkpointer</b> guarda el turno: la siguiente pregunta ("¿y de esos…?") ya tiene contexto.</div></div>
+    </div>
+  </section>
+
+  <!-- DOCKER DEPLOY -->
+  <section>
+    <div class="eyebrow">Cómo se desplegó el endpoint</div>
+    <h2>El modelo, servido con Docker</h2>
+    <p class="lead">Imagen oficial de llama.cpp con CUDA, fijada a la RTX 5070. Expone un endpoint
+      OpenAI-compatible que ambos stacks consumen.</p>
+    <div class="term rv">
+      <div class="top"><i class="t1"></i><i class="t2"></i><i class="t3"></i><span>docker/01_serve_model.sh</span></div>
+<pre><span class="cmt"># Qwen2.5-7B con tool-calling, sobre GPU, en :8081</span>
+docker run -d --rm --name demo-llm \
+  <span class="flag">--gpus</span> '"device=0"' <span class="cmt"># pin a la RTX 5070 (12GB)</span>
+  -p <span class="val">8081</span>:8081 \
+  -v /home/bubuntu/models/qwen2.5-7b-instruct:/models \
+  ghcr.io/ggml-org/llama.cpp:server-cuda13 \
+  -m /models/Qwen2.5-7B-Instruct-Q4_K_M.gguf \
+  <span class="flag">--jinja</span> <span class="cmt"># ← imprescindible: habilita tool-calling</span>
+  -c <span class="val">32768</span> <span class="cmt"># contexto 32K</span>
+  <span class="flag">-ngl</span> <span class="val">99</span> --flash-attn on \
+  --host 0.0.0.0 --port 8081</pre>
+    </div>
+  </section>
+
+  <!-- MEMORY + SECURITY -->
+  <section>
+    <div class="eyebrow">Lo que lo hace robusto</div>
+    <h2>Memoria y seguridad</h2>
+    <div class="grid2">
+      <div class="card rv">
+        <h3><span class="ic">🧠</span> Memoria de conversación</h3>
+        <ul>
+          <li><b>LangGraph:</b> checkpointer + <code>thread_id</code> por sesión.</li>
+          <li><b>Compactador:</b> recorta a las últimas N intervenciones sin romper la secuencia tool_call/result, conservando el system prompt.</li>
+          <li><b>Agent SDK:</b> memoria y compactación <b>de fábrica</b> (el harness las gestiona).</li>
+        </ul>
+      </div>
+      <div class="card rv">
+        <h3><span class="ic">🛡️</span> Seguridad (carpeta real)</h3>
+        <ul>
+          <li><b>Sandbox:</b> bloquea path traversal, rutas absolutas y symlinks que escapan.</li>
+          <li><b>Solo lectura</b> por defecto: <code>move_file</code> no hace nada sin permiso explícito.</li>
+          <li>Las tools <b>nunca crashean</b>: degradan a un mensaje de error.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section>
+    <div class="eyebrow">Cara a cara</div>
+    <h2>LangGraph vs Agent SDK</h2>
+    <table>
+      <tr><th>Eje</th><th>LangGraph</th><th>Claude Agent SDK</th></tr>
+      <tr><td><b>Habla con llama.cpp</b></td><td class="yes">Directo (OpenAI)</td><td class="warn">Vía proxy LiteLLM</td></tr>
+      <tr><td><b>Memoria / sesiones</b></td><td>Manual (checkpointer)</td><td class="yes">De fábrica</td></tr>
+      <tr><td><b>Dependencias extra</b></td><td class="yes">Ninguna</td><td class="warn">claude CLI + node + proxy</td></tr>
+      <tr><td><b>Piezas en ejecución</b></td><td class="yes">1 (llama.cpp)</td><td>2 (llama.cpp + proxy)</td></tr>
+      <tr><td><b>Control del loop</b></td><td class="yes">Total (defines el grafo)</td><td>Lo decide el harness</td></tr>
+      <tr><td><b>Mejor cuando…</b></td><td>quieres un pipeline propio y directo</td><td>quieres harness/sesión ya hechos</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    <div>agent_sdk_test · demo de agente local de administración de carpeta</div>
+    <div style="margin-top:6px">stack del modelo: llama.cpp · Qwen2.5-7B-Instruct (Q4_K_M) · Docker/CUDA · GPU RTX 5070</div>
+    <div class="chips">
+      <span class="chip">Python · uv</span>
+      <span class="chip">LangGraph</span>
+      <span class="chip">Claude Agent SDK</span>
+      <span class="chip">llama.cpp</span>
+      <span class="chip">LiteLLM</span>
+      <span class="chip">Chainlit</span>
+      <span class="chip">FastAPI</span>
+      <span class="chip">Docker · CUDA 13</span>
+    </div>
+    <div style="margin-top:18px"><a href="https://github.com/brayanfz013/agent_sdk_test" target="_blank">github.com/brayanfz013/agent_sdk_test ↗</a></div>
+  </footer>
+
+</div>
+
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.14});
+  document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
