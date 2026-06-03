@@ -40,8 +40,13 @@ async def propose_organization(args):
     return _text(lt.propose_organization.invoke({}))
 
 
-_TOOLS = [list_dir, folder_stats, search_files, read_text_file, propose_organization]
-_NAMES = ["list_dir", "folder_stats", "search_files", "read_text_file", "propose_organization"]
+@tool("retrieve", "Busqueda SEMANTICA en el CONTENIDO de los documentos indexados (RAG). Para preguntas sobre lo que DICEN los documentos. source: 'carpeta'|'kb'|'ambos'.", {"query": str, "source": str})
+async def retrieve(args):
+    return _text(lt.retrieve.invoke({"query": args["query"], "source": args.get("source", "ambos")}))
+
+
+_TOOLS = [list_dir, folder_stats, search_files, read_text_file, propose_organization, retrieve]
+_NAMES = ["list_dir", "folder_stats", "search_files", "read_text_file", "propose_organization", "retrieve"]
 
 FILE_SERVER = create_sdk_mcp_server(name="files", version="1.0.0", tools=_TOOLS)
 

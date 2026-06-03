@@ -257,6 +257,29 @@ def move_file(src: str, dest_subdir: str) -> str:
     return f"Movido: {src} -> {dest_subdir}/{s.name}"
 
 
+@tool
+def retrieve(query: str, source: str = "ambos") -> str:
+    """Busca SEMANTICAMENTE en el CONTENIDO de los documentos indexados (RAG) y devuelve fragmentos con su fuente. Usar para preguntas sobre lo que DICEN los documentos (no para contar/listar archivos). 'source': 'carpeta' | 'kb' | 'ambos'."""
+    src = source if source in ("carpeta", "kb", "ambos") else "ambos"
+    try:
+        from app import rag
+
+        res = rag.search(query, k=4, source=src)
+    except ModuleNotFoundError as e:
+        return (
+            f"RAG no instalado ({e.name}). Ejecuta: uv sync --extra rag  "
+            "y luego indexa: uv run python -m app.rag"
+        )
+    except Exception as e:  # noqa: BLE001
+        return f"No se pudo recuperar ({e})."
+    if not res:
+        return (
+            "Sin contexto relevante en los documentos indexados. Reformula la "
+            "consulta o indica que no hay informacion (no inventes)."
+        )
+    return res
+
+
 ALL_TOOLS = [
     list_dir,
     folder_stats,
@@ -264,4 +287,5 @@ ALL_TOOLS = [
     read_text_file,
     propose_organization,
     move_file,
+    retrieve,
 ]

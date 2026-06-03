@@ -33,6 +33,17 @@ VERTEX_MODEL = os.getenv("VERTEX_MODEL", "gemini-2.0-flash")
 # Cuantos mensajes de historial conserva el agente por sesion (compactador simple)
 MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", "24"))
 
+# --- RAG agentico (extra 'rag') ---
+# Base de conocimiento aparte (la otra coleccion ademas de la carpeta gestionada)
+KB_DIR = Path(os.getenv("KB_DIR", "./knowledge_base")).resolve()
+# Donde persiste el vector store Chroma
+RAG_DB_DIR = Path(os.getenv("RAG_DB_DIR", "./.rag_db")).resolve()
+# Modelo de embeddings local (multilingue, no requiere prefijos)
+EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+RAG_CHUNK_CHARS = int(os.getenv("RAG_CHUNK_CHARS", "1200"))
+RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "150"))
+RAG_MAX_FILE_MB = float(os.getenv("RAG_MAX_FILE_MB", "15"))
+
 
 def active_model() -> str:
     """Nombre del modelo realmente en uso segun el backend activo."""

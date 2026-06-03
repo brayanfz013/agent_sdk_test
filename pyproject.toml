@@ -23,6 +23,8 @@ vertex = ["langchain-google-vertexai>=2"]
 # se corre aislado con uvx (run_proxy.sh) para evitar el conflicto uvicorn entre
 # chainlit (>=0.35) y litellm[proxy] (==0.33). litellm solo es el binario del proxy.
 agent-sdk = ["claude-agent-sdk>=0.2.87"]
+# RAG agentico (app/rag.py): embeddings locales (sentence-transformers) + Chroma
+rag = ["chromadb>=0.5", "sentence-transformers>=3.0", "pypdf>=5.0"]
 
 [dependency-groups]
 dev = ["pytest>=8"]

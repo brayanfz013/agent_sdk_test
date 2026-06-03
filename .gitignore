@@ -10,6 +10,9 @@ __pycache__/
 .venv/
 uv.lock
 
+# --- RAG (vector store generado) ---
+.rag_db/
+
 # --- Secretos / config local ---
 .env
 .env.*

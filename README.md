@@ -117,6 +117,34 @@ FASE 3  Caras de consumo      Chainlit (chatbot)   ·   FastAPI (API :8080)
 - Persistencia: en memoria del proceso. Para disco, sustituir `InMemorySaver` por
   `SqliteSaver`.
 
+## RAG agéntico (preguntar por el CONTENIDO de los documentos)
+
+Además de listar/buscar archivos por nombre, el agente responde preguntas sobre lo
+que **dicen** los documentos, mediante **Agentic RAG**: una tool `retrieve` de
+búsqueda **semántica** que el propio agente decide cuándo usar.
+
+- **Embeddings** locales multilingües (`sentence-transformers`) + vector store
+  **Chroma** persistente. Sin servicios externos.
+- **Dos colecciones**: `carpeta` (la carpeta gestionada) y `kb` (base de
+  conocimiento aparte, `KB_DIR`, por defecto `./knowledge_base`). El agente elige
+  con el parámetro `source`: `carpeta` | `kb` | `ambos`.
+- **Toque CRAG**: si la recuperación no trae contexto útil, el agente lo dice o
+  reformula la búsqueda; no inventa.
+
+```bash
+uv sync --extra rag                  # instala embeddings + Chroma (torch, pesado)
+uv run python -m app.rag             # indexa AMBAS colecciones
+uv run python -m app.rag kb          # solo la base de conocimiento
+uv run python -m app.rag carpeta     # solo la carpeta gestionada
+```
+
+Luego, desde cualquier cara (CLI / chatbot / API / variante SDK):
+> *"¿Qué dice la guía sobre los puertos?"* → el agente llama a `retrieve` y cita la fuente.
+
+Solo se indexan documentos (`.pdf .txt .md .csv .ipynb`), saltando código/binarios y
+archivos mayores de `RAG_MAX_FILE_MB` (15 MB). El vector store vive en `.rag_db/`
+(gitignored). El mismo `retrieve` está disponible en la **variante Agent SDK** (tool MCP).
+
 ## Seguridad (importante: opera sobre tu Downloads real)
 
 - Agente **encajonado** en `MANAGED_DIR` (`app/tools.py::_safe`): bloquea path
@@ -173,10 +201,11 @@ el Agent SDK + proxy LiteLLM, memoria nativa del SDK, y una comparativa honesta.
 ## Estructura
 
 ```
-app/            config · llm(factory) · tools(sandbox) · agent(memoria) · cli · chatbot · api
+app/            config · llm(factory) · tools(sandbox) · agent(memoria) · rag(Agentic RAG) · cli · chatbot · api
 docker/         01_serve_model.sh · stop_model.sh · healthcheck.sh
 scripts/        download_model.sh · raw_toolcall_test.py
-tests/          test_tools.py · test_llm.py        (12 tests)
+tests/          test_tools.py · test_llm.py
+knowledge_base/ base de conocimiento del RAG (deja aquí tus docs)
 agent_sdk_version/   variante con Claude Agent SDK (+ su README)
-README.md · pyproject.toml (uv) · uv.lock
+README.md · pyproject.toml (uv)
 ```
