@@ -8,7 +8,7 @@ __pycache__/
 
 # --- Entorno / uv ---
 .venv/
-uv.lock
+# uv.lock SI se versiona (es una app: reproducibilidad + Dependabot ve transitivas)
 
 # --- RAG (vector store generado) ---
 .rag_db/
