@@ -47,9 +47,13 @@ def _client_():
     global _client
     if _client is None:
         import chromadb
+        from chromadb.config import Settings
 
         config.RAG_DB_DIR.mkdir(parents=True, exist_ok=True)
-        _client = chromadb.PersistentClient(path=str(config.RAG_DB_DIR))
+        _client = chromadb.PersistentClient(
+            path=str(config.RAG_DB_DIR),
+            settings=Settings(anonymized_telemetry=False),
+        )
     return _client
 
 

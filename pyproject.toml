@@ -24,7 +24,9 @@ vertex = ["langchain-google-vertexai>=2"]
 # chainlit (>=0.35) y litellm[proxy] (==0.33). litellm solo es el binario del proxy.
 agent-sdk = ["claude-agent-sdk>=0.2.87"]
 # RAG agentico (app/rag.py): embeddings locales (sentence-transformers) + Chroma
-rag = ["chromadb>=0.5", "sentence-transformers>=3.0", "pypdf>=5.0"]
+# chromadb<1.0: el 1.x (1.0.0-1.5.9, sin fix) tiene CVE-2026-45829 (inyeccion en
+# su servidor HTTP, que NO usamos); el 0.x no esta afectado y nos sirve embebido.
+rag = ["chromadb>=0.5,<1.0", "sentence-transformers>=3.0", "pypdf>=5.0"]
 
 [dependency-groups]
 dev = ["pytest>=8"]
